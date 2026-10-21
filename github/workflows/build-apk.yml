@@ -1,0 +1,36 @@
+name: Build CleanYourTV Launcher
+on:
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: gradle
+
+      - name: Replace gradle repo to aliyun
+        working-directory: ./launcher
+        run: |
+          sed -i 's|google()|maven { url "https://maven.aliyun.com/repository/google" }|g' settings.gradle
+          sed -i 's|mavenCentral()|maven { url "https://maven.aliyun.com/repository/central" }|g' settings.gradle
+          cat settings.gradle
+
+      - name: Build debug apk
+        working-directory: ./launcher
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: cleanyourtv-apk
+          path: launcher/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 14
